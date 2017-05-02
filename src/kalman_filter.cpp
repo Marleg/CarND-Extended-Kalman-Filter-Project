@@ -21,6 +21,7 @@ void KalmanFilter::Init(VectorXd &x_in, MatrixXd &P_in, MatrixXd &F_in,
   Q_ = Q_in;
 }
 
+
 void KalmanFilter::Predict() {
   /**
   TODO:
@@ -31,6 +32,7 @@ void KalmanFilter::Predict() {
   // std::cout << "KalmanFilter::Predict Done" << std::endl;
 
 }
+
 
 void KalmanFilter::Update(const VectorXd &z) {
   /**
@@ -50,6 +52,29 @@ void KalmanFilter::Update(const VectorXd &z) {
   // std::cout << "KalmanFilter::Update Done" << std::endl;
 }
 
+
+// VectorXd AngleNorm(VectorXd &y) {
+//   while (y(1) > M_PI || y(1) < - M_PI) {
+//     if (y(1) > M_PI)
+//       y(1) = y(1) - M_PI;
+//     if (y(1) < - M_PI)
+//       y(1) = y(1) + M_PI;
+//   };
+
+//   return y;
+// };
+
+
+VectorXd AngleNorm(VectorXd &y) {
+    if (y(1) > M_PI)
+      y(1) = fmod(y(1), M_PI);
+    if (y(1) < - M_PI)
+      y(1) = -fmod(y(1), M_PI);
+
+  return y;
+};
+
+
 void KalmanFilter::UpdateEKF(const VectorXd &z) {
   /**
   TODO:
@@ -67,7 +92,8 @@ void KalmanFilter::UpdateEKF(const VectorXd &z) {
 
   VectorXd z_pred(3);
 
-  if (x_(0) > 0.0001 && x_(1) > 0.0001) {
+  if (fabs(x_(0)) > 0.0001 && fabs(x_(1)) > 0.0001) {
+  // if (x_(0) > 0.0001 && x_(1) > 0.0001) {
   //recover state parameters
 
     //TODO: YOUR CODE HERE
@@ -80,17 +106,15 @@ void KalmanFilter::UpdateEKF(const VectorXd &z) {
   z_pred << ro, phi, ro_dot;
   VectorXd y = z - z_pred;
 
-  // while (y[1] > M_PI || y[1] < - M_PI) {
-  //   if (y[1] > M_PI)
-  //     y[1] = y[1] - M_PI;
-  //   if (y[1] < - M_PI)
-  //     y[1] = y[1] + M_PI;
+  // while (y(1) > M_PI || y(1) < - M_PI) {
+  //   if (y(1) > M_PI)
+  //     y(1) = y(1) - M_PI;
+  //   if (y(1) < - M_PI)
+  //     y(1) = y(1) + M_PI;
   // }
 
-  while (y[1] > M_PI || y[1] < - M_PI) {
-    if (y[1] > M_PI)
-      y[1] = y[1] - M_PI;
-    else y[1] = y[1] + M_PI;
+  if (fabs(y(1)) > M_PI) {
+    y = AngleNorm(y);
   }
 
   MatrixXd S = H_ * P_ * H_.transpose() + R_;
